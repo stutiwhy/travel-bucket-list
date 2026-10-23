@@ -12,7 +12,7 @@ java 17, spring boot, spring web, spring data jpa, hibernate, mysql, maven, html
 
 runs locally:
 
-- frontend: http://localhost:8080 (served by spring boot)
+- frontend: http://localhost:8081 (served by spring boot)
 - backend/database:
   - spring boot rest api
   - mysql (`travel_db`, created automatically)
@@ -22,7 +22,7 @@ runs locally:
 1. install jdk 17+, maven and mysql
 2. set your mysql username and password in `src/main/resources/application.properties`
 3. run `mvn spring-boot:run`
-4. open http://localhost:8080
+4. open http://localhost:8081
 5. (optional) run `dummy-data.sql` in mysql to load demo users and destinations. login: `stuti` / `sumedh`, password `1234`
 
 ## features
