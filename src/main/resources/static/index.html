@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travel Bucket List</title>
+<style>
+  :root { --bg:#eef6fb; --card:#fff; --text:#1d2b3a; --muted:#6b7a89; --primary:#0077b6; --line:#d5e3ee; }
+  body.dark { --bg:#0f1720; --card:#1b2733; --text:#e8eef4; --muted:#93a3b3; --line:#2c3b4a; }
+  * { box-sizing:border-box; font-family:'Segoe UI',Arial,sans-serif; }
+  body { margin:0; background:var(--bg); color:var(--text); transition:.3s; }
+  .hero { background:linear-gradient(135deg,#0077b6,#00b4d8 55%,#90e0ef); color:#fff; padding:28px 20px 60px; }
+  .hero-in { max-width:1000px; margin:auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  .hero h1 { margin:0; font-size:30px; } .hero p { margin:4px 0 0; opacity:.9; }
+  main { max-width:1000px; margin:-40px auto 30px; padding:0 12px; }
+  .box { background:var(--card); padding:16px; border-radius:14px; margin-bottom:16px; box-shadow:0 4px 14px #0002; }
+  input,select,textarea,button { padding:9px 11px; margin:3px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--text); font-size:14px; }
+  button { background:var(--primary); color:#fff; border:none; cursor:pointer; transition:.2s; }
+  button:hover { filter:brightness(1.1); transform:translateY(-1px); }
+  button.red{background:#e63946} button.green{background:#2a9d8f} button.grey{background:#6c757d} button.light{background:#ffffff33}
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; text-align:center; }
+  .stats div { background:linear-gradient(135deg,#caf0f8,#e0f7fa); color:#023e57; padding:12px; border-radius:12px; font-size:13px; }
+  body.dark .stats div { background:#223648; color:#cfeaf5; }
+  .stats b { display:block; font-size:26px; }
+  .bar { height:12px; background:var(--line); border-radius:6px; margin-top:12px; overflow:hidden; }
+  .bar div { height:100%; width:0; background:linear-gradient(90deg,#2a9d8f,#90e0ef); transition:width .6s; }
+  .chips button { background:var(--card); color:var(--text); border:1px solid var(--line); }
+  .chips button.on { background:var(--primary); color:#fff; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+  .card { background:var(--card); border-radius:16px; overflow:hidden; box-shadow:0 4px 14px #0002; transition:.25s; position:relative; }
+  .card:hover { transform:translateY(-5px); box-shadow:0 10px 24px #0003; }
+  .pic { height:170px; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; font-size:60px; }
+  .ribbon { position:absolute; top:12px; right:12px; padding:4px 10px; border-radius:20px; font-size:12px; color:#fff; font-weight:bold; background:#f4a261; }
+  .card.visited .ribbon { background:#2a9d8f; }
+  .body { padding:14px; } .body h3 { margin:0 0 4px; }
+  .muted { color:var(--muted); font-size:14px; }
+  .tag { font-size:11px; background:var(--line); padding:2px 9px; border-radius:10px; margin-left:4px; }
+  .stars span { font-size:22px; cursor:pointer; color:#bbb; } .stars span.on { color:#f9c74f; }
+  .actions { margin-top:8px; } .actions button, .actions a { font-size:13px; padding:6px 10px; margin:2px; }
+  a.map { background:#6a4c93; color:#fff; border-radius:8px; text-decoration:none; display:inline-block; }
+  #msg { color:#e63946; min-height:20px; font-weight:bold; }
+  .hidden { display:none; }
+  @media(max-width:600px){ .stats{grid-template-columns:repeat(2,1fr)} }
+</style>
+</head>
+<body>
+<div class="hero"><div class="hero-in">
+  <div><h1>✈ Travel Bucket List</h1><p>Save dreams. Tick them off. Repeat.</p></div>
+  <div><button class="light" onclick="toggleDark()">🌙 / ☀</button><button id="logoutBtn" class="light hidden" onclick="logout()">Logout</button></div>
+</div></div>
+
+<main>
+  <p id="msg"></p>
+
+  <section id="authBox" class="box">
+    <h3>Login or Register</h3>
+    <input id="username" placeholder="Username"><input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button><button class="green" onclick="register()">Register</button>
+  </section>
+
+  <section id="app" class="hidden">
+    <div class="box">
+      <div class="stats">
+        <div><b id="sTotal">0</b>🌍 Total</div><div><b id="sVisited">0</b>✅ Visited</div>
+        <div><b id="sPending">0</b>⏳ Pending</div><div><b id="sPercent">0%</b>📈 Progress</div>
+      </div>
+      <div class="bar"><div id="bar"></div></div>
+    </div>
+
+    <div class="box">
+      <h3 id="formTitle">Add Destination</h3>
+      <input id="name" placeholder="Destination name"><input id="city" placeholder="City"><input id="country" placeholder="Country">
+      <select id="category"></select><br>
+      <input id="imageUrl" placeholder="Image URL (optional - auto-fetched if empty)" style="width:98%"><br>
+      <textarea id="description" placeholder="Description" rows="2" style="width:98%"></textarea><br>
+      <button onclick="save()">💾 Save</button><button class="grey" onclick="resetForm()">Clear</button>
+    </div>
+
+    <div class="box">
+      <input id="search" placeholder="🔍 Search name, city, country..." oninput="load()">
+      <select id="sort" onchange="load()"><option value="new">Newest first</option><option value="name">Name A-Z</option><option value="rating">Top rated</option></select>
+      <div class="chips" id="statusChips" style="margin-top:6px"></div>
+      <div class="chips" id="catChips"></div>
+    </div>
+
+    <div id="cards" class="cards"></div>
+  </section>
+</main>
+
+<script>
+let token = localStorage.getItem("token"), editingId = null, items = [];
+let status = "", category = "";
+const EMOJI = { BEACH:"🏖️", MOUNTAIN:"🏔️", CITY:"🏙️", HISTORICAL:"🏛️", OTHER:"🌍" };
+const GRAD  = { BEACH:"#48cae4,#ade8f4", MOUNTAIN:"#8d99ae,#edf2f4", CITY:"#6a4c93,#c77dff", HISTORICAL:"#e9c46a,#f4a261", OTHER:"#2a9d8f,#90e0ef" };
+const $ = id => document.getElementById(id);
+const imgCache = {};   // Wikipedia pictures already looked up
+
+async function api(url, method = "GET", body) {
+  const res = await fetch("/api" + url, { method, headers:{ "Content-Type":"application/json", "Authorization":"Bearer " + token }, body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { if (res.status === 401 && token) logout(); throw new Error(data.error || "Something went wrong"); }
+  return data;
+}
+const show = t => $("msg").textContent = t || "";
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
+
+function toggleDark() { document.body.classList.toggle("dark"); localStorage.setItem("dark", document.body.classList.contains("dark")); }
+if (localStorage.getItem("dark") === "true") document.body.classList.add("dark");
+
+// ---------- auth ----------
+async function register() { try { await api("/auth/register","POST",{username:$("username").value,password:$("password").value}); show("Registered! Now click Login."); } catch(e){ show(e.message); } }
+async function login() {
+  try { const r = await api("/auth/login","POST",{username:$("username").value,password:$("password").value});
+    token = r.token; localStorage.setItem("token", token); show(""); start(); } catch(e){ show(e.message); }
+}
+function logout() { token = null; localStorage.removeItem("token"); $("authBox").classList.remove("hidden"); $("app").classList.add("hidden"); $("logoutBtn").classList.add("hidden"); }
+
+// ---------- app ----------
+async function start() {
+  $("authBox").classList.add("hidden"); $("app").classList.remove("hidden"); $("logoutBtn").classList.remove("hidden");
+  const cats = await api("/categories");
+  $("category").innerHTML = cats.map(c => `<option value="${c}">${EMOJI[c]} ${c}</option>`).join("");
+  $("statusChips").innerHTML = [["","All"],["pending","⏳ Pending"],["visited","✅ Visited"]].map(([v,l]) => `<button data-s="${v}" onclick="setStatus('${v}')">${l}</button>`).join("");
+  $("catChips").innerHTML = `<button data-c="" onclick="setCat('')">All types</button>` + cats.map(c => `<button data-c="${c}" onclick="setCat('${c}')">${EMOJI[c]} ${c}</button>`).join("");
+  load();
+}
+function setStatus(v) { status = v; load(); }
+function setCat(v) { category = v; load(); }
+
+async function load() {
+  try {
+    const q = new URLSearchParams({ search:$("search").value, category, status });
+    items = await api("/bucket-list?" + q);
+    const sort = $("sort").value;
+    if (sort === "name") items.sort((a,b) => a.name.localeCompare(b.name));
+    else if (sort === "rating") items.sort((a,b) => (b.rating||0) - (a.rating||0));
+    else items.sort((a,b) => b.id - a.id);
+    document.querySelectorAll("#statusChips button").forEach(b => b.classList.toggle("on", b.dataset.s === status));
+    document.querySelectorAll("#catChips button").forEach(b => b.classList.toggle("on", b.dataset.c === category));
+    render(); loadStats();
+  } catch (e) { show(e.message); }
+}
+
+function render() {
+  $("cards").innerHTML = items.map(d => {
+    const grad = GRAD[d.category] || GRAD.OTHER;
+    const img = safeUrl(d.imageUrl);
+    const mapLink = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(`${d.name} ${d.city} ${d.country}`);
+    const stars = [1,2,3,4,5].map(n => `<span class="${(d.rating||0) >= n ? "on" : ""}" onclick="rate(${d.id},${n})">★</span>`).join("");
+    return `<div class="card ${d.visited ? "visited" : ""}">
+      <div class="pic" id="pic${d.id}" style="background-image:${img ? `url('${esc(img)}')` : "none"}; background-color:#ddd; ${img ? "" : `background-image:linear-gradient(135deg,${grad})`}">${img ? "" : EMOJI[d.category] || "🌍"}</div>
+      <div class="ribbon">${d.visited ? "✅ Visited" : "⏳ Pending"}</div>
+      <div class="body">
+        <h3>${esc(d.name)}</h3>
+        <div class="muted">📍 ${esc(d.city)}, ${esc(d.country)} <span class="tag">${EMOJI[d.category]} ${esc(d.category)}</span></div>
+        <p class="muted">${esc(d.description)}</p>
+        <div class="stars">${stars}</div>
+        <div class="actions">
+          <button class="${d.visited ? "grey" : "green"}" onclick="toggle(${d.id},${d.visited})">${d.visited ? "Mark Pending" : "Mark Visited"}</button>
+          <a class="map" href="${mapLink}" target="_blank" rel="noopener">🗺 Map</a>
+          <button onclick="edit(${d.id})">Edit</button><button class="red" onclick="remove(${d.id})">🗑</button>
+        </div>
+      </div></div>`;
+  }).join("") || "<p>No destinations found.</p>";
+  items.filter(d => !safeUrl(d.imageUrl)).forEach(d => autoImage(d));   // fetch pictures for cards with no image URL
+}
+
+// Free picture lookup from Wikipedia (tries the place name, then the city)
+async function autoImage(d) {
+  for (const term of [d.name, d.city]) {
+    if (!(term in imgCache)) {
+      try {
+        const r = await fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(term.replace(/ /g, "_")));
+        imgCache[term] = r.ok ? ((await r.json()).thumbnail?.source || null) : null;
+      } catch { imgCache[term] = null; }
+    }
+    if (imgCache[term]) {
+      const el = $("pic" + d.id);
+      if (el) { el.style.backgroundImage = `url('${imgCache[term]}')`; el.textContent = ""; }
+      return;
+    }
+  }
+}
+
+async function loadStats() {
+  const s = await api("/stats");
+  $("sTotal").textContent = s.total; $("sVisited").textContent = s.visited; $("sPending").textContent = s.pending;
+  $("sPercent").textContent = s.progressPercent + "%"; $("bar").style.width = s.progressPercent + "%";
+}
+
+async function save() {
+  const d = { name:$("name").value, city:$("city").value, country:$("country").value, category:$("category").value,
+              description:$("description").value, imageUrl:$("imageUrl").value };
+  try {
+    if (editingId) { d.rating = items.find(x => x.id === editingId).rating; await api("/bucket-list/" + editingId, "PUT", d); }
+    else await api("/bucket-list", "POST", d);
+    show(""); resetForm(); load();
+  } catch (e) { show(e.message); }
+}
+async function rate(id, n) {
+  const d = { ...items.find(x => x.id === id), rating: n };
+  try { await api("/bucket-list/" + id, "PUT", d); load(); } catch (e) { show(e.message); }
+}
+function edit(id) {
+  const d = items.find(x => x.id === id); editingId = id; $("formTitle").textContent = "Edit Destination";
+  ["name","city","country","category","description"].forEach(f => $(f).value = d[f] || "");
+  $("imageUrl").value = d.imageUrl || ""; window.scrollTo({ top:0, behavior:"smooth" });
+}
+function resetForm() { editingId = null; $("formTitle").textContent = "Add Destination"; ["name","city","country","description","imageUrl"].forEach(i => $(i).value = ""); }
+async function toggle(id, v) { try { await api(`/bucket-list/${id}/${v ? "pending" : "visited"}`, "PUT"); load(); } catch (e) { show(e.message); } }
+async function remove(id) { if (!confirm("Delete this destination?")) return; try { await api("/bucket-list/" + id, "DELETE"); load(); } catch (e) { show(e.message); } }
+
+if (token) start();
+</script>
+</body>
+</html>
